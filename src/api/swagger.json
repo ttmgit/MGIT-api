@@ -1,0 +1,782 @@
+{
+  "info": {
+    "title": "Touchkpick API",
+    "version": "1.0.0",
+    "description": "This API connects to OMS's database and performs operations for the Touchpick app"
+  },
+  "host": "127.0.0.1:3000",
+  "basePath": "/api",
+  "swagger": "2.0",
+  "paths": {
+    "/assignment/region/{regionId}": {
+      "get": {
+        "summary": "Get Assignment by Region",
+        "description": "Gets the next available (or in progress) assignment given a region id",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "regionId",
+            "required": true,
+            "type": "integer",
+            "minimum": 1,
+            "description": "Region Identifier.",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "First available or in progress assignment",
+            "schema": {
+              "$ref": "#/definitions/AssignmentModel"
+            }
+          },
+          "404": {
+            "description": "Assignments not found in region"
+          }
+        },
+        "security": [
+          {
+            "oauth_2_resource_owner_auth": []
+          }
+        ],
+        "tags": [
+          "Assignment"
+        ]
+      }
+    },
+    "/assignment/{id}/confirm": {
+      "put": {
+        "summary": "Confirm Assignment",
+        "description": "Sets an assignment as in progress",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "minimum": 1,
+            "description": "Assignment Identifier.",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Confirmed assignment with picks and related pick info",
+            "schema": {
+              "$ref": "#/definitions/AssignmentModel"
+            }
+          },
+          "409": {
+            "description": "Assignment either in other status or belongs to another operator"
+          }
+        },
+        "security": [
+          {
+            "oauth_2_resource_owner_auth": []
+          }
+        ],
+        "tags": [
+          "Assignment"
+        ]
+      }
+    },
+    "/assignment/{assignmentId}/finish-picking": {
+      "put": {
+        "summary": "Batch finalize picking for a given assignment",
+        "description": "Finishes an assignment by giving the picks with their amount of product. All of the picks are required",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "required": true,
+            "type": "integer",
+            "minimum": 1,
+            "description": "Assignment Identifier.",
+            "in": "path"
+          },
+          {
+            "name": "body",
+            "required": true,
+            "description": "Assignment request that describes the start time, end time and picks.",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/FinishAssignmentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Confirmed assignment with picks",
+            "schema": {
+              "$ref": "#/definitions/AssignmentModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth_2_resource_owner_auth": []
+          }
+        ],
+        "tags": [
+          "Assignment"
+        ]
+      }
+    },
+    "/operators/active-region": {
+      "put": {
+        "summary": "Change Operator's Active Region",
+        "description": "Sets the active region for an operator. The region must be associated to the operator's workgroup",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "required": true,
+            "description": "Active Region.",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ActiveRegionRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Changed the active region"
+          }
+        },
+        "security": [
+          {
+            "oauth_2_resource_owner_auth": []
+          }
+        ],
+        "tags": [
+          "Operator"
+        ]
+      }
+    },
+    "/task-functions": {
+      "get": {
+        "summary": "Get all task functions",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Task Functions",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TaskFunctionModel"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth_2_resource_owner_auth": []
+          }
+        ],
+        "tags": [
+          "TaskFunction"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "FinishAssignmentRequest": {
+      "type": "object",
+      "required": [
+        "id",
+        "quantityPicked"
+      ],
+      "properties": {
+        "startTime": {
+          "type": "dateTime",
+          "description": "The start time ISO String"
+        },
+        "endTime": {
+          "type": "dateTime",
+          "description": "The start time ISO String"
+        },
+        "picks": {
+          "description": "The pick objects to save. Must be the same as the ones on the assignment",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PickUpdateBatchRequest"
+          }
+        }
+      },
+      "example": {
+        "picks": [
+          {
+            "id": 24979,
+            "quantityPicked": 29
+          }
+        ],
+        "startTime": "2017-06-07T14:34:08.700Z",
+        "endTime": "2017-06-07T14:34:08.700Z"
+      }
+    },
+    "ActiveRegionRequest": {
+      "type": "object",
+      "required": [
+        "regionId"
+      ],
+      "properties": {
+        "regionId": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "example": {
+        "regionId": 13
+      }
+    },
+    "PickUpdateBatchRequest": {
+      "type": "object",
+      "required": [
+        "id",
+        "quantityPicked"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The pick identifier"
+        },
+        "quantityPicked": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The amount of products picked"
+        },
+        "pickTime": {
+          "type": "dateTime",
+          "description": "Pick time"
+        }
+      },
+      "example": [
+        {
+          "id": 13,
+          "quantityPicked": 1
+        }
+      ]
+    },
+    "AssignmentModel": {
+      "type": "object",
+      "readonly": [
+        "items"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "vlId": {
+          "type": "integer"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "splitNumber": {
+          "type": "integer"
+        },
+        "workId": {
+          "type": "string"
+        },
+        "partialWorkId": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "number"
+        },
+        "sequenceNumber": {
+          "type": "number"
+        },
+        "originalSequence": {
+          "type": "number"
+        },
+        "operatorId": {
+          "type": "number"
+        },
+        "status": {
+          "type": "number"
+        },
+        "type": {
+          "type": "number"
+        },
+        "regionId": {
+          "type": "number"
+        },
+        "groupNumber": {
+          "type": "number"
+        },
+        "requestedOrderNo": {
+          "type": "number"
+        },
+        "groupPosition": {
+          "type": "number"
+        },
+        "groupCount": {
+          "type": "number"
+        },
+        "route": {
+          "type": "string"
+        },
+        "deliveryDate": {
+          "type": "date"
+        },
+        "deliveryLocationId": {
+          "type": "integer"
+        },
+        "customerId": {
+          "type": "number"
+        },
+        "goalTime": {
+          "type": "number"
+        },
+        "startTime": {
+          "type": "dateTime"
+        },
+        "endTime": {
+          "type": "dateTime"
+        },
+        "calculatedBaseItems": {
+          "type": "integer"
+        },
+        "exportStatus": {
+          "type": "integer"
+        },
+        "purgable": {
+          "type": "integer"
+        },
+        "reservedBY": {
+          "type": "integer"
+        },
+        "departureDateTime": {
+          "type": "dateTime"
+        },
+        "loadingRegionId": {
+          "type": "number"
+        },
+        "printStatus": {
+          "type": "number"
+        },
+        "reportStatus": {
+          "type": "number"
+        },
+        "productivityStatus": {
+          "type": "number"
+        },
+        "updatedBy": {
+          "type": "number"
+        },
+        "updated": {
+          "type": "dateTime"
+        },
+        "created": {
+          "type": "dateTime"
+        },
+        "routeId": {
+          "type": "number"
+        },
+        "lpn": {
+          "type": "string"
+        },
+        "picks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PickModel"
+          }
+        },
+        "deliveryLocation": {
+          "type": "object",
+          "$ref": "#/definitions/LocationModel"
+        }
+      }
+    },
+    "ItemModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "vlId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "number": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "phoneticDescription": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "pack": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "weight": {
+          "type": "float"
+        },
+        "cube": {
+          "type": "float"
+        },
+        "upc": {
+          "type": "string"
+        },
+        "scanVerificationCode": {
+          "type": "string"
+        },
+        "spokenVerificationCode": {
+          "type": "string"
+        },
+        "isSerialNumber": {
+          "type": "integer"
+        },
+        "family": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "custom": {
+          "type": "string"
+        },
+        "updateVl": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "dateTime"
+        },
+        "created": {
+          "type": "dateTime"
+        },
+        "volume": {
+          "type": "float"
+        },
+        "height": {
+          "type": "float"
+        },
+        "reorder": {
+          "type": "boolean"
+        },
+        "reorderPoint": {
+          "type": "integer"
+        }
+      },
+      "example": {
+        "id": 551,
+        "vlId": null,
+        "number": "12747",
+        "description": "Yog Lala Lic Fre-Plá-Cer 240 gr",
+        "phoneticDescription": "Yog Lala Lic Fre-Plá-Cer 240 gr",
+        "size": null,
+        "pack": "24",
+        "weight": 6.444,
+        "cube": 0,
+        "upc": null,
+        "scanVerificationCode": null,
+        "spokenVerificationCode": null,
+        "isSerialNumber": 0,
+        "family": "244 Yogurt",
+        "parent": null,
+        "custom": null,
+        "updateVl": true,
+        "updatedBy": null,
+        "updated": "2017-11-07T18:10:24.023Z",
+        "created": "2017-09-26T18:18:37.013Z",
+        "volume": 2943,
+        "height": 15.7,
+        "reorder": false,
+        "reorderPoint": 3840
+      }
+    },
+    "LocationModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "vlId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "preAisle": {
+          "type": "string"
+        },
+        "aisle": {
+          "type": "string"
+        },
+        "postAisle": {
+          "type": "string"
+        },
+        "slot": {
+          "type": "string"
+        },
+        "checkDigits": {
+          "type": "string"
+        },
+        "spokenVerification": {
+          "type": "string"
+        },
+        "scannedVerification": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer"
+        },
+        "regionId": {
+          "type": "integer"
+        },
+        "updateVl": {
+          "type": "boolean"
+        },
+        "updatedBy": {
+          "type": "number"
+        },
+        "updated": {
+          "type": "dateTime"
+        },
+        "created": {
+          "type": "dateTime"
+        },
+        "shipmentGate": {
+          "type": "boolean"
+        }
+      },
+      "example": {
+        "id": 104,
+        "vlId": null,
+        "preAisle": "",
+        "aisle": "1",
+        "postAisle": "1",
+        "slot": "010",
+        "checkDigits": "94",
+        "spokenVerification": "1010",
+        "scannedVerification": "0101010   ",
+        "status": 1,
+        "regionId": 13,
+        "updateVl": false,
+        "updatedBy": null,
+        "updated": "2017-09-12T17:37:01.670Z",
+        "created": "2017-08-03T14:05:00.656Z",
+        "shipmentGate": false
+      }
+    },
+    "PickModel": {
+      "type": "object",
+      "readOnly": [
+        "uom",
+        "item",
+        "location"
+      ],
+      "required": [
+        "quantityToPick",
+        "quantityPicked"
+      ],
+      "properties": {
+        "vlId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "assignmentId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "locationId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "itemId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sequenceNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "caseLabelCheckDigit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cartonNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "triggerReplenishment": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "uomId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quantityToPick": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "baseItemOverride": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "targetContainerIndicator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "promptMessage": {
+          "type": "string"
+        },
+        "quantityPicked": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quantityAdjusted": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "isBaseItem": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "operatorId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pickTime": {
+          "type": "dateTime",
+          "minimum": 1
+        },
+        "type": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "originalPickId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "shortedDate": {
+          "type": "dateTime",
+          "minimum": 1
+        },
+        "created": {
+          "type": "dateTime",
+          "minimum": 1
+        },
+        "updated": {
+          "type": "dateTime",
+          "minimum": 1
+        },
+        "uom": {
+          "type": "object",
+          "$ref": "#definitions/UomModel"
+        },
+        "item": {
+          "type": "object",
+          "$ref": "#definitions/ItemModel"
+        },
+        "location": {
+          "type": "object",
+          "$ref": "#definitions/LocationModel"
+        }
+      },
+      "example": {
+        "vlId": 1
+      }
+    },
+    "TaskFunctionModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "functionType": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "regionType": {
+          "type": "integer"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "hasRegions": {
+          "type": "boolean"
+        },
+        "created": {
+          "type": "dateTime",
+          "minimum": 1
+        },
+        "updated": {
+          "type": "dateTime",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "example": {
+        "vlId": 1
+      }
+    },
+    "UomModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "abrev": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        }
+      },
+      "example": {
+        "id": 5,
+        "abrev": "PAL",
+        "description": "Pallet",
+        "order": 1
+      }
+    }
+  },
+  "responses": {},
+  "parameters": {},
+  "securityDefinitions": {
+    "oauth_2_resource_owner_auth": {
+      "description": "OAuth Endpoints, contact your admin for a client id and secret",
+      "flow": "password",
+      "type": "oauth2",
+      "tokenUrl": "/api/oauth",
+      "refreshUrl": "/api/oauth"
+    }
+  },
+  "tags": []
+}
