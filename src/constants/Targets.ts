@@ -34,6 +34,9 @@ export const Targets = {
         },
         EmpresasTieneFormularios: {
             EmpresasTieneFormularios: 'EmpresasTieneFormularios'
+        },
+        Empresas: {
+            Empresas: 'Empresas'
         }
     },
     Repository:     {
@@ -45,6 +48,9 @@ export const Targets = {
         },
         Administrador: {
             AdministradorRepository: 'AdministradorRepository'
+        },
+        Empresa: {
+            EmpresaRepository: 'EmpresaRepository'
         }
     },
     Service:     {
@@ -56,6 +62,9 @@ export const Targets = {
         },
         Administrador: {
             AdministradorService: 'AdministradorService'
+        },
+        Empresa: {
+            EmpresaService: 'EmpresaService'
         }
     },
     Middleware:     {

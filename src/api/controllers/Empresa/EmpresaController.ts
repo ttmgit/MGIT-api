@@ -11,7 +11,8 @@ import {
 import { OAuthMiddleware } from '../../middlewares/OAuthMiddleware';
 import { Targets, Types } from '../../../constants';
 import { TokenExtractorMiddleware } from '../../middlewares/TokenExtractorMiddleware';
-
+import { EmpresaService } from '../../services/Empresa/EmpresaService';
+import { inject, named } from 'inversify';
 
 const OAuth = app.IoC.getNamed<OAuthMiddleware>(Types.Middleware, Targets.Middleware.OAuthMiddleware);
 const tokenExtractor = app.IoC.getNamed<TokenExtractorMiddleware>(Types.Middleware, Targets.Middleware.TokenExtractorMiddleware);
@@ -19,6 +20,8 @@ const tokenExtractor = app.IoC.getNamed<TokenExtractorMiddleware>(Types.Middlewa
 @controller('/empresa')
 export class EmpresaController {
 
+    constructor(@inject(Types.Service) @named(Targets.Service.Empresa.EmpresaService) public empresaService: EmpresaService) {
+        }
     @httpGet('/menus', OAuth.oAuthExpressServer.authenticate(), tokenExtractor.use)
     public async menus(@requestBody() body: any, @request() req: myExpress.Request,
                        @response() res: myExpress.Response): Promise<any> {
@@ -52,8 +55,17 @@ export class EmpresaController {
     @httpPost('')
     public async crearEmpresa(@requestBody() body: any,
                               @response() res: myExpress.Response): Promise<any> {
-        console.log(body);
-        return res.ok({});
+        return this.empresaService.crearUsuario(body);
+    }
+
+    @httpGet('/sector')
+    public async traerSectores(): Promise<any> {
+        return null;
+    }
+
+    @httpGet('/tamanio')
+    public async traerTamaniosEmpresa(): Promise<any> {
+        return null;
     }
 
 }
